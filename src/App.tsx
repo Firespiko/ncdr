@@ -1,29 +1,53 @@
-import React, { useState, useCallback } from 'react';
-import { Lock, Unlock, RotateCw, Terminal, Shield, Binary } from 'lucide-react';
+import { useState, useCallback } from "react";
+import { Lock, Unlock, Terminal, Shield } from "lucide-react";
 
-type Mode = 'encode' | 'decode';
+type Mode = "encode" | "decode";
+type CipherMode = "normal" | "random";
 
 function App() {
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [shift, setShift] = useState(3);
-  const [mode, setMode] = useState<Mode>('encode');
-  
-  const caesarCipher = useCallback((text: string, shift: number, mode: Mode) => {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?`~\'" \\';
-    const actualShift = mode === 'decode' ? -shift : shift;
-    
-    return text
-      .split('')
-      .map(char => {
-        const index = characters.indexOf(char);
-        if (index === -1) return char;
-        const newIndex = (index + actualShift) % characters.length;
-        return characters[newIndex >= 0 ? newIndex : newIndex + characters.length];
-      })
-      .join('');
+  const [mode, setMode] = useState<Mode>("encode");
+  const [cipherMode, setCipherMode] = useState<CipherMode>("normal");
+  const [randomOutput, setRandomOutput] = useState("");
+
+  const randomMode = useCallback((text: string, mode: Mode) => {
+    let randomtext = "";
+    for (let i = 0; i < text.length; i++) {
+      const randomShiftSeed = Math.floor(Math.random() * 25) + 1;
+      randomtext += caesarCipher(text[i], randomShiftSeed, mode);
+      console.log(randomShiftSeed);
+    }
+    return randomtext;
   }, []);
 
-  const output = caesarCipher(input, shift, mode);
+  const handleGenerate = () => {
+    setRandomOutput(randomMode(input, mode));
+  };
+
+  const caesarCipher = useCallback(
+    (text: string, shift: number, mode: Mode) => {
+      const characters =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,.<>?`~'\" \\";
+      const actualShift = mode === "decode" ? -shift : shift;
+
+      return text
+        .split("")
+        .map((char) => {
+          const index = characters.indexOf(char);
+          if (index === -1) return char;
+          const newIndex = (index + actualShift) % characters.length;
+          return characters[
+            newIndex >= 0 ? newIndex : newIndex + characters.length
+          ];
+        })
+        .join("");
+    },
+    []
+  );
+
+  const output =
+    cipherMode === "normal" ? caesarCipher(input, shift, mode) : randomOutput;
 
   return (
     <div className="min-h-screen matrix-bg text-[#0fa] p-6 flex items-center justify-center">
@@ -39,87 +63,100 @@ function App() {
         <div className="mb-8 flex justify-center">
           <div className="bg-black/50 rounded-lg p-1 flex gap-1 neon-box">
             <button
-              onClick={() => setMode('encode')}
-              className={`px-6 py-2 rounded-md transition-all duration-300 font-mono ${
-                mode === 'encode'
-                  ? 'bg-[#0fa]/20 text-[#0fa] neon-glow'
-                  : 'text-[#0fa]/70 hover:text-[#0fa]'
+              onClick={() => setMode("encode")}
+              className={`px-6 py-2 rounded-md ${
+                mode === "encode"
+                  ? "bg-[#0fa]/20 text-[#0fa] neon-glow"
+                  : "text-[#0fa]/70"
               }`}
             >
-              &gt; ENCODE
+              {" "}
+              &gt; ENCODE{" "}
             </button>
             <button
-              onClick={() => setMode('decode')}
-              className={`px-6 py-2 rounded-md transition-all duration-300 font-mono ${
-                mode === 'decode'
-                  ? 'bg-[#0fa]/20 text-[#0fa] neon-glow'
-                  : 'text-[#0fa]/70 hover:text-[#0fa]'
+              onClick={() => setMode("decode")}
+              className={`px-6 py-2 rounded-md ${
+                mode === "decode"
+                  ? "bg-[#0fa]/20 text-[#0fa] neon-glow"
+                  : "text-[#0fa]/70"
               }`}
             >
-              &gt; DECODE
+              {" "}
+              &gt; DECODE{" "}
             </button>
           </div>
         </div>
-        
+
+        <div className="mb-8 flex justify-center">
+          <div className="bg-black/50 rounded-lg p-1 flex gap-1 neon-box">
+            <button
+              onClick={() => setCipherMode("normal")}
+              className={`px-6 py-2 rounded-md ${
+                cipherMode === "normal"
+                  ? "bg-[#0fa]/20 text-[#0fa] neon-glow"
+                  : "text-[#0fa]/70"
+              }`}
+            >
+              {" "}
+              NORMAL MODE{" "}
+            </button>
+            <button
+              onClick={() => setCipherMode("random")}
+              className={`px-6 py-2 rounded-md ${
+                cipherMode === "random"
+                  ? "bg-[#0fa]/20 text-[#0fa] neon-glow"
+                  : "text-[#0fa]/70"
+              }`}
+            >
+              {" "}
+              RANDOM MODE{" "}
+            </button>
+          </div>
+        </div>
+
+        <div className="mb-8 flex justify-center">
+          <label className="block text-lg font-mono flex items-center gap-2">
+            Shift:
+            <input
+              type="number"
+              value={shift}
+              onChange={(e) => setShift(Number(e.target.value))}
+              className="w-20 p-2 rounded-lg bg-black/50 border border-[#0fa]/30 font-mono text-[#0fa]"
+            />
+          </label>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-4">
             <label className="block text-lg font-mono flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              {mode === 'encode' ? 'PLAINTEXT' : 'CIPHERTEXT'}
+              {mode === "encode" ? "PLAINTEXT" : "CIPHERTEXT"}
             </label>
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              className="w-full h-48 p-4 rounded-lg bg-black/50 border border-[#0fa]/30 font-mono 
-                       text-[#0fa] placeholder-[#0fa]/30 focus:outline-none focus:neon-box 
-                       transition-shadow duration-300"
-              placeholder={`Enter ${mode === 'encode' ? 'plaintext' : 'ciphertext'} here...`}
+              className="w-full h-48 p-4 rounded-lg bg-black/50 border border-[#0fa]/30 font-mono text-[#0fa]"
             />
+            {cipherMode === "random" && (
+              <button
+                onClick={handleGenerate}
+                className="px-6 py-2 bg-[#0fa]/20 text-[#0fa] neon-glow rounded-md"
+              >
+                Generate Random Output
+              </button>
+            )}
           </div>
-          
+
           <div className="space-y-4">
             <label className="block text-lg font-mono flex items-center gap-2">
               <Unlock className="w-4 h-4" />
-              {mode === 'encode' ? 'CIPHERTEXT' : 'PLAINTEXT'}
+              {mode === "encode" ? "CIPHERTEXT" : "PLAINTEXT"}
             </label>
             <textarea
               value={output}
               readOnly
-              className="w-full h-48 p-4 rounded-lg bg-black/50 border border-[#0fa]/30 font-mono 
-                       text-[#0fa] placeholder-[#0fa]/30 focus:outline-none"
+              className="w-full h-48 p-4 rounded-lg bg-black/50 border border-[#0fa]/30 font-mono text-[#0fa]"
             />
-          </div>
-        </div>
-        
-        <div className="mt-8 flex flex-col items-center gap-4">
-          <div className="flex items-center gap-4">
-            <label className="text-lg font-mono flex items-center gap-2">
-              <Binary className="w-4 h-4" />
-              SHIFT_KEY:
-            </label>
-            <div className="flex items-center gap-2 bg-black/50 rounded-lg p-2 border border-[#0fa]/30 neon-box">
-              <button
-                onClick={() => setShift(s => (s - 1 + 95) % 95)}
-                className="text-[#0fa] hover:neon-glow p-1 transition-all duration-300"
-              >
-                -
-              </button>
-              <span className="font-mono w-8 text-center">{shift}</span>
-              <button
-                onClick={() => setShift(s => (s + 1) % 95)}
-                className="text-[#0fa] hover:neon-glow p-1 transition-all duration-300"
-              >
-                +
-              </button>
-            </div>
-            <button
-              onClick={() => setShift(3)}
-              className="flex items-center gap-2 text-[#0fa]/70 hover:text-[#0fa] hover:neon-glow
-                       transition-all duration-300"
-              title="Reset to default shift (3)"
-            >
-              <RotateCw className="w-4 h-4" />
-            </button>
           </div>
         </div>
       </div>
